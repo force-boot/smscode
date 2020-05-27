@@ -1,0 +1,166 @@
+{extend name="/index/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><h4>新建任务</h4></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>任务类型</label>
+                    <select class="form-control" name="type" id="type" v-model="type">
+                        <option value="import">导入数据</option>
+                        <option value="message">群发短信</option>
+                        <option value="email">群发邮件</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>描述</label>
+                    <input type="text" id="desc" name="desc" v-model="desc" placeholder="描述内容"
+                           class="form-control" required>
+                </div>
+                <form id="form-csv">
+                    <div class="form-group" v-show="type === 'import'">
+                        <label>csv文件</label>
+                        <input type="file" id="f" name="csvfile" class="form-control" required>
+                    </div>
+                </form>
+                <div class="form-group" v-show="type === 'message' || type === 'email'">
+                    <label>筛选客户</label>
+                    <select class="form-control" name="custom_type" v-model="custom_type">
+                        <option value="0">全部客户</option>
+                        <option value="1">导入批次</option>
+                    </select>
+                </div>
+                <div class="form-group" v-show="custom_type == 1 && (type === 'message' || type === 'email')">
+                    <label>选择批次</label>
+                    <select class="form-control" name="batch_id" v-model="batch_id">
+                        <option v-for="(item,index) in batchList" :value="item.id">
+                            {{item.create_time}} 客户数量:{{item.task.num}} 描述:{{item.task != null ? item.task.desc :'无'}}
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group" v-show="type === 'message'">
+                    <label>短信模板</label>
+                    <select class="form-control" name="template_id" v-model="template_id">
+                        <option v-for="(item,index) in templateList" :value="item.TemplateId">
+                            {{item.TemplateName}} - {{item.StatusCode == 0 ? '审核通过' :'审核未通过或审核失败'}}
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group" v-show="type === 'email'">
+                    <label>邮件内容</label>
+                    <textarea class="form-control" name="mail" v-model="mail" rows="10" cols="60"
+                              placeholder="Please fill in the email content, supporting text and HTML"></textarea>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-block btn-primary" type="submit" @click="submit()">确认新建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            type: 'import',
+            custom_type: 0,
+            batchList: [],
+            batch_id: 0,
+            templateList: [],
+            template_id: 0,
+            mail: '',
+            desc: ''
+        },
+        methods: {
+            // 提交表单
+            submit() {
+                if (!this.type) return black.msg('请选择新建任务类型', 'warning');
+                if (this.type !== 'import') {
+                    if (this.custom_type == 1 && !this.batch_id) return black.msg('请选择批次', 'warning');
+                    if (this.type === 'message' && !this.template_id) return black.msg('请选择短信模板', 'warning');
+                    if (this.type === 'email' && !this.mail) return black.msg('请输入邮件内容', 'warning');
+                }
+                if (this.type === 'import') return this.createImport();
+                return this.createTask();
+            },
+            getBatchList() {
+                black.ajax('/admin/batchList', null, (res) => {
+                    this.batchList = res.list;
+                    this.batch_id = res.list[0].id;
+                });
+            },
+            getTemplateList() {
+                black.ajax('/admin/templatelist', null, (res) => {
+                    this.templateList = res.list;
+                    this.template_id = res.list[0].TemplateId;
+                });
+            },
+            createTask() {
+                let form = {
+                    type: this.type,
+                    desc: this.desc,
+                    batch_id: this.custom_type == 1 ? this.batch_id : 0,
+                    data: this.template_id
+                };
+                black.ajax('/admin/addtask', form, (res) => {
+                    if (res.code === 0) {
+                        black.msg(res.msg, 'success');
+                        return $.pjax({
+                            url: "/admin/tasklist.html",
+                            container: '#pjax-container'
+                        });
+                    }
+                    return black.msg(res.msg, 'warning');
+                });
+            },
+            // 创建导入
+            createImport() {
+                var data = new FormData($('#form-csv')[0]);
+                if (!$("#f").val()) return black.msg('请选择需要导入的CSV文件', 'warning');
+                lightyear.loading('show');
+                $.ajax({
+                    url: "{:url('/admin/taskupload')}",
+                    type: 'POST',
+                    data: data,
+                    dataType: 'JSON',
+                    cache: false,
+                    timeout: 30000,
+                    processData: false,
+                    contentType: false
+                }).done(function (ret) {
+                    lightyear.loading('hide');
+                    if (ret.code === 0) {
+                        var data = {
+                            type: $("#type").val(),
+                            desc: $("#desc").val(),
+                            data: ret.list
+                        };
+                        black.ajax('/admin/addtask', data, function (res) {
+                            if (res.code === 0) {
+                                black.msg(res.msg, 'success');
+                                return setTimeout(() => {
+                                    $.pjax({
+                                        url: "/admin/tasklist.html",
+                                        container: '#pjax-container'
+                                    });
+                                }, 1500);
+                            }
+                            return black.msg(res.msg, 'warning');
+                        }, '', false);
+                    } else {
+                        return black.msg(ret.msg, 'warning');
+                    }
+                });
+                return false;
+            },
+        },
+        mounted: function () {
+            this.getBatchList();
+            this.getTemplateList();
+        }
+    })
+</script>
+{/block}

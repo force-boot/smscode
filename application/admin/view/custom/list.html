@@ -1,0 +1,114 @@
+{extend name="index/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-toolbar clearfix">
+                <form class="pull-right search-bar" method="get" action="#!" role="form">
+                    <div class="input-group">
+                        <div class="input-group-btn">
+                            <input type="hidden" name="search_field" id="search-field" value="title">
+                            <button class="btn btn-default dropdown-toggle" id="search-btn" data-toggle="dropdown"
+                                    type="button" aria-haspopup="true" aria-expanded="false">
+                                姓名<span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a tabindex="-1" href="javascript:void(0)" data-field="title">姓名</a></li>
+                                <li><a tabindex="-1" href="javascript:void(0)" data-field="cat_name">邮箱</a></li>
+                                <li><a tabindex="-1" href="javascript:void(0)" data-field="cat_name">手机</a></li>
+                                <li><a tabindex="-1" href="javascript:void(0)" data-field="cat_name">导入批次</a></li>
+                                <li><a tabindex="-1" href="javascript:void(0)" data-field="cat_name">标签</a></li>
+                            </ul>
+                        </div>
+                        <input type="text" class="form-control" value="" name="keyword" placeholder="请输入搜索的内容">
+                    </div>
+                </form>
+                <div class="toolbar-btn-action">
+                    <a class="btn btn-primary m-r-5" href="{:url('/admin/addtask')}" data-pjax><i class="mdi mdi-plus"></i> 新增</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>姓名</th>
+                            <th>邮箱</th>
+                            <th>手机号</th>
+                            <th>导入时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>{{ record.id }}</td>
+                            <td>{{ record.name }}</td>
+                            <td>{{ record.email }}</td>
+                            <td>{{ parsePhone(record.custom_phone) }}</td>
+                            <td>{{ record.create_time }}</td>
+                            <td><a class="btn-sm btn-success">发送短信</a> <a class="btn-sm btn-warning">发送邮件</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                    <pagination ref="pagination" :total="total" :current_page="search.page" :page_size="search.pageSize"
+                                @page-phange="pageChange"></pagination>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            search: {
+                page: 1,
+                pageSize: 10,
+                name: '',
+                bid: '',
+                tag: '',
+                email: '',
+                phone: '',
+            },
+            total: 0,
+            list: []
+        },
+        methods: {
+            pageChange: function (p) {
+                this.search.page = p;
+                this.loadRecordList();
+            },
+            loadRecordList: function () {
+                this.$refs.pagination.setCurrent(this.search.page);// 改变页码
+                var vue = this;
+                black.ajax("{:url('/admin/customlist')}", this.search, function (data) {
+                    if (data.code === 0) {
+                        vue.total = data.total;
+                        vue.list = data.list;
+                    } else {
+                        black.msg(data.msg, 'error')
+                    }
+                })
+            },
+            parsePhone(phone) {
+                let len = phone.length;
+                if (len === 1) {
+                    return phone[0]['phone'];
+                } else if (len > 1) {
+                    let phoneText = '';
+                    for (let i = 0; i <= (len - 1); i++) {
+                        phoneText += phone[i]['phone'] + '/';
+                    }
+                    return phoneText.slice(0, phoneText.length - 1);
+                }
+            }
+        },
+        mounted: function () {
+            this.loadRecordList();
+        }
+    })
+</script>
+{/block}

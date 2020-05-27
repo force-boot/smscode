@@ -1,0 +1,180 @@
+{extend name="/index/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-purple">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">总计客户数</p>
+                    <p class="h3 text-white m-b-0">{{count.custom}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-account fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-primary">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">总计手机号数量</p>
+                    <p class="h3 text-white m-b-0">{{count.phone}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-cellphone-iphone fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-pink">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">总计任务数</p>
+                    <p class="h3 text-white m-b-0">{{count.task.loading}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-arrow-down-bold fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-info">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">等待中的任务</p>
+                    <p class="h3 text-white m-b-0">{{count.task.loading}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-arrow-down-bold fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-warning">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">进行中的任务</p>
+                    <p class="h3 text-white m-b-0">{{count.task.run}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-rotate-3d fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-success">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">已完成的任务</p>
+                    <p class="h3 text-white m-b-0">{{count.task.succ}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-check fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-success">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">已发送短信</p>
+                    <p class="h3 text-white m-b-0">{{count.msg.all}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-comment-multiple-outline fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-danger">
+            <div class="card-body clearfix">
+                <div class="pull-right">
+                    <p class="h6 text-white m-t-0">发送失败短信</p>
+                    <p class="h3 text-white m-b-0">{{count.msg.no}}</p>
+                </div>
+                <div class="pull-left"><span class="img-avatar img-avatar-48 bg-translucent"><i
+                        class="mdi mdi-comment-remove-outline fa-1-5x"></i></span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>近期事件</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>事件</th>
+                            <th>时间</th>
+                            <th>状态</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="record in list">
+                            <td>{{record.id}}</td>
+                            <td>{{record.desc}}</td>
+                            <td>{{record.create_time}}</td>
+                            <td><span :class="statusColor(record.status)">{{record.status}}</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        data: {
+            list: [],
+            count: {}
+        },
+        methods: {
+            loadRecordList: function () {
+                var vue = this;
+                black.ajax("{:url('/admin/log')}", {}, function (data) {
+                    if (data.code === 0) {
+                        vue.list = data.list;
+                    } else {
+                        black.msg(data.msg, 'error')
+                    }
+                })
+            },
+            loadCount: function () {
+                var vue = this;
+                black.ajax("{:url('/admin/index')}", {}, function (data) {
+                    if (data.code === 0) {
+                        vue.count = data.list;
+                    } else {
+                        black.msg(data.message, 'error')
+                    }
+                })
+            },
+            statusColor(value) {
+                let color;
+                if (value === '待定') {
+                    color = 'label label-info';
+                } else if (value === '进行中') {
+                    color = 'label label-warning';
+                } else if (value === '已完成') {
+                    color = 'label label-success';
+                } else {
+                    color = 'label label-danger';
+                }
+                return color;
+            },
+        },
+        mounted: function () {
+            this.loadCount();
+            this.loadRecordList();
+        }
+    });
+</script>
+{/block}

@@ -1,0 +1,92 @@
+{extend name="/index/layout" /}
+{block name="main"}
+<div class="row" id="vue-page">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h4>短信配置</h4></div>
+            <div class="card-body">
+                <form  id="form-config" onsubmit="return false;">
+                    <div class="form-group">
+                        <label>SecretId</label>
+                        <input class="form-control" type="text" name="sms_SecretId" placeholder="请输入SecretId"
+                               value="{:config('sms_SecretId')}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SecretKey</label>
+                        <input class="form-control" type="text" name="sms_SecretKey" placeholder="请输入SecretKey"
+                               value="{:config('sms_SecretKey')}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Region</label>
+                        <select class="form-control" name="sms_region" id="region">
+                            <option value="">请选择大区</option>
+                            <option value="ap-beijing">华北地区(北京)</option>
+                            <option value="ap-chengdu">西南地区(成都)</option>
+                            <option value="ap-chongqing">西南地区(重庆)</option>
+                            <option value="ap-guangzhou">华南地区(广州)</option>
+                            <option value="ap-guangzhou-open">华南地区(广州Open)</option>
+                            <option value="ap-hongkong">港澳台地区(中国香港)</option>
+                            <option value="ap-seoul">亚太地区(首尔)</option>
+                            <option value="ap-shanghai">华东地区(上海)</option>
+                            <option value="ap-singapore">东南亚地区(新加坡)</option>
+                            <option value="eu-frankfurt">欧洲地区(法兰克福)</option>
+                            <option value="na-siliconvalley">美国西部(硅谷)</option>
+                            <option value="na-toronto">北美地区(多伦多)</option>
+                            <option value="ap-mumbai">亚太地区(孟买)</option>
+                            <option value="na-ashburn">美国东部(弗吉尼亚)</option>
+                            <option value="ap-bangkok">亚太地区(曼谷)</option>
+                            <option value="eu-moscow">欧洲地区(莫斯科)</option>
+                            <option value="ap-tokyo">亚太地区(东京)</option>
+                            <option value="ap-nanjing">华东地区(南京)</option>
+                            <option disabled="disabled">______金融区______</option>
+                            <option value="ap-shanghai-fsi">华东地区(上海金融)</option>
+                            <option value="ap-shenzhen-fsi">华南地区(深圳金融)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>TemplateID(多个使用,分割)</label>
+                        <input type="text" name="sms_TemplateID" placeholder="请输入TemplateID"
+                               value="{:config('sms_TemplateID')}"
+                               class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SmsSdkAppid</label>
+                        <input type="text" name="sms_SmsSdkAppid" placeholder="请输入SmsSdkAppid "
+                               value="{:config('sms_SmsSdkAppid')}"
+                               class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Sign</label>
+                        <input type="text" name="sms_Sign" placeholder="请输入Sign"
+                               value="{:config('sms_Sign')}"
+                               class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn btn-block btn-primary" type="submit" @click="saveConfig()">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name='foot'}
+<script>
+    new Vue({
+        el: '#vue-page',
+        methods: {
+            saveConfig: function () {
+                black.ajax("{:url('/admin/config')}", $("#form-config").serialize(), function (data) {
+                    if (data.code === 0) {
+                        black.msg(data.msg, 'success')
+                    } else {
+                        black.msg(data.msg, 'error')
+                    }
+                })
+            }
+        }
+    });
+    $('#region option[value="{:config('sms_region')}"]').prop("selected", true);
+</script>
+{/block}

@@ -1,0 +1,100 @@
+<script type="x/template" id="pagination-template">
+    <nav class="text-center">
+        <ul class="pagination" style="display: -webkit-inline-box;" v-if="parseInt(total) > 0">
+            <li :class="{'disabled': current == 1,'page-item':true}">
+                <a href="javascript:;" @click="setCurrent(1)" class="page-link"> 首页 </a>
+            </li>
+            <li :class="{'disabled': current == 1,'page-item':true}">
+                <a href="javascript:;" @click="setCurrent(current - 1)" class="page-link"> 上一页 </a>
+            </li>
+            <li v-for="p in grouplist" :class="{'active': current == p.val,'page-item':true}">
+                <a href="javascript:;" @click="setCurrent(p.val)" class="page-link"> {{ p.text }}</a>
+            </li>
+            <li :class="{'disabled': current == page,'page-item':true}">
+                <a href="javascript:;" @click="setCurrent(current + 1)" class="page-link"> 下一页</a>
+            </li>
+            <li :class="{'disabled': current == page,'page-item':true}">
+                <a href="javascript:;" @click="setCurrent(page)" class="page-link">尾页 </a>
+            </li>
+        </ul>
+        <div class="p-2 text-info" v-else>暂无数据</div>
+    </nav>
+</script>
+<script>
+    Vue.component('pagination', {
+        template: '#pagination-template',
+        data: function () {
+            return {
+                current: this.current_page
+            }
+        },
+        props: {
+            total: {            // 数据总条数
+                type: Number,
+                default: 0
+            },
+            page_size: {            // 每页显示条数
+                type: Number,
+                default: 10
+            },
+            current_page: {            // 当前页码
+                type: Number,
+                default: 1
+            },
+            page_group: {        // 分页条数 -- 奇数
+                type: Number,
+                default: 5,
+                coerce: function (v) {
+                    v = v > 0 ? v : 5;
+                    return v % 2 === 1 ? v : v + 1
+                }
+            }
+        },
+        computed: {
+            page: function () { // 总页数
+                return Math.ceil(this.total / this.page_size)
+            },
+            grouplist: function () { // 获取分页页码
+                var len = this.page;
+                var temp = [];
+                var list = [];
+                var count = Math.floor(this.page_group / 2);
+                var center = this.current;
+                if (len <= this.page_group) {
+                    while (len--) {
+                        temp.push({text: this.page - len, val: this.page - len})
+                    }
+                    return temp
+                }
+                while (len--) {
+                    temp.push(this.page - len)
+                }
+
+                var idx = temp.indexOf(center);
+                (idx < count) && (center = center + count - idx);
+                (this.current > this.page - count) && (center = this.page - count);
+                temp = temp.splice(center - count - 1, this.page_group);
+                do {
+                    var t = temp.shift();
+                    list.push({
+                        text: t,
+                        val: t
+                    })
+                } while (temp.length);
+                if (this.page > this.page_group) {
+                    (this.current > count + 1) && list.unshift({text: '...', val: list[0].val - 1});
+                    (this.current < this.page - count) && list.push({text: '...', val: list[list.length - 1].val + 1})
+                }
+                return list
+            }
+        },
+        methods: {
+            setCurrent: function (idx) {
+                if (this.current !== idx && idx > 0 && idx < this.page + 1) {
+                    this.current = idx;
+                    this.$emit('page-phange', this.current)
+                }
+            }
+        }
+    })
+</script>
